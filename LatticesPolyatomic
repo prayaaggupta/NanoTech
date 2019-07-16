@@ -1,0 +1,93 @@
+###LATTICES
+import kwant
+
+###POLYATOMIC
+
+"""
+From FAQ:
+'The two sublattices sub_a and sub_b are nothing else than Monatomic 
+instances, and are equivalent to lat_a and lat_b that we created 
+previously. The advantage of the second approach is that there is now a
+Polyatomic object that is aware of both of its sublattices, and we can do
+things like calculate neighboring sites, even between sublattices, which 
+would not be possible with the two separate Monatomic lattices. '
+
+Like usual, we declare a system which is a dictionary called syst using 
+kwant Builder() method.
+
+Then we declare our lattice which in this instance is a polyatomic object.
+We hardcode the primitive vectors into the declaration of the polyatomic lattice
+as such:
+
+""lat = kwant.lattice.Polyatomic([(1,0),(0,1)],[(0,0),(0.5,0.5)])""
+
+But we can also include them like our last cell:
+
+""
+primitive_vectors = [(1,0),(0,1)]
+lat = kwant.lattice.Polyatomic(primitive_vectors,[(0,0),(0.5,0.5)])
+""
+
+Notice that in this case, we declare many instances of monatomic lattices
+inside the polyatomic arguments such that we don't have to manually instantiate
+many monatomic lattices manually.
+
+I believe that we can declare a great amount of sublattices in one call of the polyatomic method like this:
+
+lat = kwant.lattice.Polyatomic([(1,0),(0,1)],[(0,0),(0.5,0.5),(0.5,-0.5),(-0.5,0.5),(-0.5,-0.5), ... , (n, m)])
+
+AND SURE ENOUGH, we can. The only thing is that we have to also declare as many lattice offsets declared above as 
+sublattices of the polyatomic lattice. Like this:
+
+""
+sub_a, sub_b, sub_c, sub_d, sub_e, . . ., sub_n = lat.sublattices
+""
+
+In addition, we also have to declare their origin and their site energies:
+
+""
+syst[sub_a(0,0)] = 4
+syst[sub_b(0,0)] = 4
+syst[sub_c(0,0)] = 4
+syst[sub_d(0,0)] = 4
+syst[sub_e(0,0)] = 4
+. 
+.
+.
+syst[sub_n(0,0)] = 4
+
+#where the place holder for sub_n is the nth sublattice and the coordinate (0,0) refers to the lattice 
+#origin of reference. The placeholder for 4 is the site energy.
+""
+
+Here is the big realization. 
+This is useful because now you can find probabilities between neighboring sites and sublattices.
+
+In addition, I believe that each sublattice is a different sublattice with respect to the other. Otherwise, they would
+be represented with the same color. 
+I'm thinking that if we want sublattices to be constructed of different 'atoms' and be together, we have to declare
+many instances of the same sublattice. 
+
+I will demonstrate this in the next cell. I will construct a methane molecule (CH4).
+
+"""
+
+
+syst = kwant.Builder()
+
+lat = kwant.lattice.Polyatomic([(1,0),(0,1)],[(0,0),(0.5,0.5),(0.5,-0.5),(-0.5,0.5),(-0.5,-0.5)])
+
+##Double lattice approach
+#lat = kwant.lattice.Polyatomic([(1,0),(0,1)],[(0,0),(0.5,0.5)])
+
+sub_a, sub_b, sub_c, sub_d, sub_e = lat.sublattices
+
+syst[sub_a(0,0)] = 4
+syst[sub_b(0,0)] = 4
+syst[sub_c(0,0)] = 4
+syst[sub_d(0,0)] = 4
+syst[sub_e(0,0)] = 4
+#syst[sub_a(0,1)] = 4
+
+
+kwant.plot(syst, site_lw = 0.01);
