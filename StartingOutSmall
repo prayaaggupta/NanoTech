@@ -1,0 +1,126 @@
+"""
+STARTING OUT SMALL
+"""
+
+import kwant 
+
+###SITES
+"""
+first we declare a lattice by calling our variable lat and calling
+upon the lattice member function and the method square() 
+
+then we declare a system by starting out with kwant.Builder()
+
+Notice that we have to create the sites in the system individually, that is, 
+one at a time. That is most probably why we have to create one single loop
+to construct the complete system of many sites. 
+
+to construct one site, we have syst[lat(1,0)]:
+this creates an instance/item of the syst[] dictionary and its first instance
+is a lattice site. 
+The values passed to the lattice site are a tuple that forms a site on the 
+coordinate axes, x and y. 
+
+If I were to say:
+syst[lat(1,0)] = 4
+syst[lat(1,1)] = 4, 
+
+we would get a graph that looks like:
+
+1|        @
+ |
+ |
+0|        @
+ ----------
+ 0    .5  1
+ 
+ but if I were to say:
+ 
+syst[lat(1,0)] = 4
+syst[lat(1,1)] = 4
+syst[lat(0,0)] = 4
+
+we would get a similar graph that looks like:
+
+1|        @
+ |
+ |
+0|@       @
+ ----------
+ 0    .5  1
+ 
+ here the sites are '@' and their lattice sites are defined by lat(i,j)
+ 
+"""
+a = 1
+lat = kwant.lattice.square(a)
+syst = kwant.Builder()
+
+#adds lattice sites as syst[] dictionary items
+
+#The keys for the syst dictionary are lattice sites and the values are the energies for these sites
+syst[lat(1,0)] = 4
+syst[lat(1,1)] = 4
+syst[lat(0,0)] = 4
+syst[lat(0,1)] = 4
+'''
+
+for i in range(10):
+    for j in range(10):
+        syst[lat(i,j)] = 4
+'''
+
+
+
+###HOPPING
+"""
+Now, for the same created system, we discuss hopping between 
+onsite hamiltonians. 
+
+I call the small connections/hoppings between one site and another, hopper-leads.
+
+Now, this would be the core method to hop between one site to another. Realize 
+that we have to iterate between one site to another using loops to be able to 
+connect each onsite hamiltonian with ease otherwise we'd have to connect each
+site individually.
+
+Another thing to notice is that the top piece of this code connects the sites
+across the y-position from y = 0-1.
+
+The bottom piece of this hopping code connects two sites in the x-direction
+holding y=0 from x = 1->0.
+
+The hopping direction is symmetric, meaning that you can connect in any direction and
+it won't matter. This is due to the hermiticity in the matrix. 
+
+ONE more thing to notice, on the documentation, they created a tuple by 
+enclosing two lattice sites in parentheses. There seems to be no noticeable 
+difference whether I use these exterior parentheses or not. 
+Perhaps it doesn't matter so far because the system is rather small and it may
+be taken into account as the system grows. 
+
+"""
+
+syst[(lat(1,0),lat(1,1))] = 1j
+
+syst[lat(1,0),lat(0,0)] = 1j
+
+"""
+This particular hopper-lead connects the sites diagonally.
+Just wanted to point it out. 
+"""
+syst[lat(1,0),lat(0,1)] = 1j
+
+#syst[lat(1,1),lat(0,0)] = 1j
+
+
+
+
+
+
+
+
+#plots system
+kwant.plot(syst);
+
+
