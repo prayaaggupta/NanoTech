@@ -1,0 +1,101 @@
+###Hopping Monatomic (neighbors() method)
+
+import kwant
+
+"""
+Both types of so-far-known lattices have a method for hopping between them
+called neighbors() which returns a list of HoppingKind instances that connect 
+their (n-nearest) neighbors:
+
+"""
+
+#declare a system
+syst = kwant.Builder()
+
+#declare a lattice of type square
+lat = kwant.lattice.square()
+
+###Here is a novel way to create a lattice system
+syst[(lat(i,j) for i in range(4) for j in range(4))] = 4
+
+"""
+Notice that normally we would declare a lattice site in this manner:
+
+'syst[lat(i,j)] = 4'
+
+but that is only for one site. If we want to declare for many sites
+we would have to loop through each range in the x and in the y directions.
+Like this:
+
+'
+for i in range(L):
+    for j in range(W):
+        syst[lat(i,j)] = 4
+'
+
+Notice that we indeed have created an array lattice LxW area units large. 
+
+The novel way, however, takes a loop embedded in the lattice key 
+declaration for the dictionary syst.
+
+We don't have to create loop as the one above; we simply have to tell
+the ranges of traversal when we instantiate the lattice keys. 
+
+"""
+
+###'Automatic' hopping between found sites
+#We might be able to do the same with lat.neighbors(1)
+syst[lat.neighbors(2)] = -1 
+
+
+
+
+"""
+Like mentioned, this method automatically finds available 
+sites to hop between. It's method found in the instantiation
+of lat that automatically hops between sites. 
+"""
+
+##This piece deletes the found hoppings
+#del syst[lat.neighbors()]
+
+syst[lat(0,0), lat(1,0)] = 0
+##This piece creates hopping between neighbors in diagonal fashion
+#syst[lat.neighbors(2)] = -1
+
+"""
+###lat.neighbors(x) where x ranges from 1 to n 
+
+*when x = 0, that would mean exactly the site is trying to 
+    hop to itself, so it's not valid
+*when x = 1, sites hop to adjacent sites
+*when x = 2, sites hop diagonally
+*when x = 3, sites hop adjacently but sites grow in size and
+    the hopping lead is very short
+*when x = 4, sites are big as well and hopping seems to be 
+    diagonal
+*when x = 5, ...
+
+#allowing one hopping from lat(0,0) to lat(1,0) gives us 
+    more visibility on what's going on that is, the sites do
+    not grow in size and we can see the actual hoppings at 
+    different parameters of x.
+    
+*when x = 1, sites hop adjacently
+*when x = 2, sites hop diagonally at 45 degree angles
+*when x = 3, sites hop adjacently
+*when x = 4, sites hop diagonally but they hop at steeper
+    angles and there are crossings of hoppings in mesh
+*when x = 5, sites hop diagonally at 45 degree angles but
+    only hop along the direction of the exterior sites
+
+and so on and so forth, there seems to be no rhyme or reason
+
+######
+The number represents the hoppings between the n nearest 
+neighbors such that n = 2 represents a hopping to the 2nd nearest neighbor.
+
+In that case, the image depends on the shape of the total lattice. 
+"""
+#plot the system
+kwant.plot(syst,site_lw = 0.0075);
