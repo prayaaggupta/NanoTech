@@ -1,0 +1,281 @@
+"""
+QUANTUM WIRE
+"""
+
+
+# Tutorial 2.2.2. Transport through a quantum wire
+# ================================================
+#
+# Physics background
+# ------------------
+#  Conductance of a quantum wire; subbands
+#
+# Kwant features highlighted
+# --------------------------
+#  - Builder for setting up transport systems easily
+#  - Making scattering region and leads
+#  - Using the simple sparse solver for computing Landauer conductance
+
+from matplotlib import pyplot
+import kwant
+
+# First, define the tight-binding system
+
+"""
+We begin by defining a system that we shall call syst. 
+We call upon the class kwant and specifically the embedded method Builder() to let our program know that we are
+going to 'build' a system. 
+
+We let our size parameter 'a' be unity. 
+We define a lattice structure using the inhereted class of kwant class, lattice and using the method found in lattice: 
+square().
+
+We let the square be of size 'a', unity for simplicity. 
+"""
+syst = kwant.Builder()
+
+# Here, we are only working with square lattices
+a = 1
+lat = kwant.lattice.square(a)
+
+
+"""
+Next we define parameters:
+
+**t is the parameter that we will use for energy
+**W is the width of our system
+**L is the length of our system
+"""
+t = 1.0
+W = 10
+L = 30
+
+# Define the scattering region
+
+"""
+Next we start building our lattice structure:
+
+We iterate over every piece of area in our lattice that is L by W area units large. 
+We make sure to create a system Hamiltonian at each one of the sites that we iterate over. 
+'syst[lat(i,j)] = 4 * t'
+
+Now, if the value of j, that is, our position in the width direction, is greater than 0, then we construct a 
+'connection' from the current onsite hamiltonian to the neighboring one in the downward direction.
+
+Same thing for i greater than 0, only we connect the hopping leads in the right-ward direction. 
+
+Now when we read the end of the wire, the hamiltonian sites reach over to the leads. 
+
+It does not matter if we leave off some hopper leads. We still connect the leads anyway. 
+"""
+for i in range(L):
+    for j in range(W):
+        # On-site Hamiltonian
+        syst[lat(i, j)] = 4 * t
+
+        #Hopping in y-direction
+        if j > 0:
+            syst[lat(i, j), lat(i, j - 1)] = -t
+
+        #Hopping in x-direction
+        if i > 0:
+            syst[lat(i, j), lat(i - 1, j)] = -t
+
+
+            
+"""  
+
+THIS LITTLE PIECE OF CODE CONSTRUCTS A WIRE MESH WHERE WE HOP FROM ONE LEAD TO THE OTHER 
+ONLY BY DIAGONAL HOPPINGS
+
+#we are going to attempt hopping in righ diagonal direction
+
+
+for i in range(L-1):
+    for j in range(W-1):
+        
+        if ((j < 10) and (i < 30)):
+            syst[lat(i,j), lat(i+1,j+1)] = -t
+
+#Now hopping in the left diagonal direction
+
+
+for i in range(L-1):
+    for j in range(W-1,0,-1):
+        
+        if j<10 and i < 30:
+            syst[lat(i,j),lat(i+1,j-1)] = -t
+
+"""
+
+
+# Then, define and attach the leads:
+
+
+# First the lead to the left
+# (Note: TranslationalSymmetry takes a real-space vector)
+
+"""
+We define the lead to the left and call it a name that describes it as the left lead. 
+Then using builder, we pass this lead as an argument to let the program know that we want to 
+build this lead.
+"""
+sym_left_lead = kwant.TranslationalSymmetry((-a, 0))
+left_lead = kwant.Builder(sym_left_lead)
+
+"""
+The for loop below is designed to connect the left lead manually to the left part of the 
+lattice. Notice that we are iterating over the width of the lattice. 
+We then attach the lead. 
+"""
+
+for j in range(W):
+    left_lead[lat(0, j)] = 4 * t
+    if j > 0:
+        left_lead[lat(0, j), lat(0, j - 1)] = -t
+    left_lead[lat(1, j), lat(0, j)] = -t
+
+"""
+attach the lead
+"""
+syst.attach_lead(left_lead)
+
+"""
+Here we attach the right side. 
+"""
+# Then the lead to the right
+sym_right_lead = kwant.TranslationalSymmetry((a, 0))
+right_lead = kwant.Builder(sym_right_lead)
+
+
+
+
+
+    
+
+for j in range(W):
+    
+        
+    """
+    This piece constructs the right lead for the onsite hamiltonians.  
+    """
+    right_lead[lat(0, j)] = 4 * t
+    
+    
+    """
+This piece connects it. 
+
+NOTICE:
+the first piece, the for loop, 'right_lead[lat(0,j), lat(0,j-1)] = -t', 
+constructs the connections of the lead in the up and down directions.
+Like this:
+
+consider the pluses to be the onsite hamiltonians of the wire, the @ symbols to be the 
+lead onsite hamiltonians and the hyphens to be connections
+
+. . .-+ @ @
+      | | |
+. . .-+ @ @
+      | | |
+. . .-+ @ @
+      | | | 
+      . . .
+      . . . 
+      . . .
+
+
+
+and the second piece, the 'right_lead[lat(1,j), lat(0,j)] = -t', connects the lead 
+lattice to in the left and right directions. 
+
+. . .-+-@-@
+      | | |
+. . .-+-@-@
+      | | |
+. . .-+-@-@
+      | | | 
+      . . .
+      . . . 
+      . . .
+"""
+    if j > 0: 
+        right_lead[lat(0, j), lat(0, j - 1)] = -t
+    right_lead[lat(1, j), lat(0, j)] = -t
+
+
+
+    
+
+"""
+attach the lead
+"""
+syst.attach_lead(right_lead)
+
+"""
+This is the kwant embedded method to display the system that you have created. 
+Perhaps it would be good to keep running this portion throughout to see what's 
+been created so far and to see what you need to create. 
+"""
+# Plot it, to make sure it's OK
+kwant.plot(syst)
+
+"""
+finally, call upon the finalized() member function of the created system. 
+"""
+# Finalize the system
+syst = syst.finalized()
+
+
+"""
+This portion would be well suited to display and interpret the voltage that is 
+running through the whole system. 
+
+We want to find the respective voltage readings across the wire at different energetic settings, t. 
+"""
+
+
+# Now that we have the system, we can compute conductance
+energies = []
+data = []
+
+"""
+We try 100 energies. Ranging from t = 0 to 1. 
+
+For each energy we comput the scattering matrix at the given energy. 
+Looks like the developers have constructed the s-matrix in class kwant. 
+
+we create a variable called smatrix and set it equal to smatrix member function return when 
+passed the arguments: our system, and the respective energy for this iteration. 
+"""
+for ie in range(100):
+    energy = ie * 0.01
+
+    # compute the scattering matrix at a given energy
+    smatrix = kwant.smatrix(syst, energy)
+
+    
+    """
+    From what we have here, we find the probability of voltage running through the 
+    quantum wire. From one lead to another at different energies we check the total probability
+    of getting a reading. 
+    At this energy, we append the energy to our energy list/array. 
+    We then append to our data list/array the probabilistic value passed back from smatrix 
+    transmission member function. The value 1 corresponds to lead 1 and 0 respectively to lead 0. 
+    """
+    # compute the transmission probability from lead 0 to
+    # lead 1
+    energies.append(energy)
+    data.append(smatrix.transmission(1, 0))
+    
+"""
+Finally, we plot the energies v. data corresponding to the transmission probability at different 
+energies. 
+"""
+
+# Use matplotlib to write output
+# We should see conductance steps
+pyplot.figure()
+pyplot.plot(energies, data)
+pyplot.xlabel("energy [t]")
+pyplot.ylabel("conductance [e^2/h]")
+pyplot.show()
