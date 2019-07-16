@@ -1,0 +1,81 @@
+###Honeycomb
+import kwant
+
+
+#let's construct a scattering region
+L = 5
+W = 5
+
+lat = kwant.lattice.honeycomb()
+subA, subB = lat.sublattices
+
+#system declaration
+syst = kwant.Builder()
+
+#sites
+syst[(subA(i,j) for i in range(L) for j in range(W))] = 4
+syst[(subB(i,j) for i in range(L) for j in range(W))] = 4
+
+#Hoppers
+syst[lat.neighbors()] = -1
+
+#Leads
+"""
+In this section we create leads. We have to specify the type of lead 
+that we want to use:
+
+lat_lead = kwant.lattice.square()
+
+meaning that we want to create a lattice of the square type to specify
+the shape of the lead.
+
+Then we define the symmetry of the lead using:
+
+sym_lead1 = kwant.TranslationalSymmetry((0,1))
+"""
+lat_lead = kwant.lattice.square()
+sym_lead1 = kwant.TranslationalSymmetry((0,1))
+
+
+"""
+Now that we have declared our lead symmetry and lattice type,
+we begin to apply them to our system. 
+
+We pass our symmetry lead to kwant.Builder() to let the object know that
+we are constructing a lead. Then to object lead1 we create sites:
+
+lead1[(lat_lead(i,0) for i in range(2,7))] = 4
+
+Notice that we have instantiated the lead as lead1 and begin constructing it 
+with the previously declared lattice of square type, lat_lead. 
+
+We also make the hoppings for our lead lattice.
+"""
+lead1 = kwant.Builder(sym_lead1)
+lead1[(lat_lead(i,0) for i in range(2,7))] = 4
+lead1[lat_lead.neighbors()] = -1
+
+"""
+'We cannot simply use attach_lead to attach this lead to the system with 
+the honeycomb lattice because Kwant does not know how sites from these 
+two lattices should be connected.'
+
+Since we're are connecting a honeycomb lattice and a square lattice, 
+kwant cannot automatically connect both types of lattices. 
+
+We first add a layer of sites from the square lattice to the system as a 
+bridge between the honeycomb and the square lattice lead. 
+"""
+
+#create a line of sites above the honeycomb 
+syst[(lat_lead(i,5) for i in range(2,7))] = 4
+#connect the sites above the honeycomb to each other
+syst[lat_lead.neighbors()] = -1
+
+#manually attach the sites from square lattice to honeycomb lattice
+syst[((lat_lead(i+2,5), subB(i,4)) for i in range(5))] = -1
+
+##Now we are able to use attach.lead()
+syst.attach_lead(lead1)
+
+kwant.plot(syst);
