@@ -1,0 +1,37 @@
+"""
+NOTHING MUCH TO GATHER FROM THIS ONE EXCEPT THAT WE CAN VARY THE COLOR
+OF THE SUBLATTICES TO OUR CHOOSING AND WE ALSO HAVE OTHER PARAMETERS 
+WE CAN CHANGE WHEN PLOTTING OUR SYSTEM.
+"""
+import kwant 
+
+lat = kwant.lattice.kagome()
+syst = kwant.Builder()
+
+a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
+
+
+
+# Plot sites from different families in different colors
+def family_color(site):
+    if site.family == a:
+        return 'red'
+    if site.family == b:
+        return 'green'
+    else:
+        return 'blue'
+
+def plot_system(syst):
+    kwant.plot(syst, site_lw=.05, site_color=family_color)
+
+## Add sites and hoppings.
+for i in range(4):
+    for j in range (4):
+        syst[a(i, j)] = 4
+        syst[b(i, j)] = 4
+        syst[c(i, j)] = 4
+
+syst[lat.neighbors()] = -1
+
+## Plot the system.
+plot_system(syst)
