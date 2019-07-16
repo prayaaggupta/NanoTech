@@ -1,0 +1,224 @@
+"""
+05/31
+
+Branch system
+"""
+
+import kwant 
+from matplotlib import pyplot
+
+#Length and width
+L,W = 35,20
+
+#site size
+a = 1
+
+#onsite hamiltonian energy
+t = 4
+
+#initialize the system
+syst = kwant.Builder()
+lat = kwant.lattice.square(a)
+
+
+
+
+
+"""
+Here we construct our lattice system. 
+"""
+#construct the system of sites
+for i in range(L):
+    for j in range(W):
+        
+        if (j > 4 and j < 15):
+            syst[lat(i,j)] = -t
+            
+        elif((j < 6 or j >  14) and ((i > 4 and i < 11) \
+            or (i >= 15 and i <= 20) or (i >= 25 and i <= 30))):
+            syst[lat(i,j)] = -t
+
+#hoppings between sites
+syst[lat.neighbors()] = -t
+
+
+
+
+
+
+
+
+"""
+Here we construct left and right contacts for our system.
+"""
+
+###RIGHT CONTACT
+#initialize right lead and state 'symmetry'?
+sym_right_lead = kwant.TranslationalSymmetry((a, 0))
+right_lead = kwant.Builder(sym_right_lead)
+
+for j in range(W):
+    
+    #create contacts and hop from contacts to lattice
+    if(j <= 14 and j > 4):
+        right_lead[lat(35,j)] = t
+        right_lead[lat(35,j),lat(34,j)] = t
+        
+#hop between contact sites     
+right_lead[lat.neighbors()] = t
+
+#attach the right lead
+syst.attach_lead(right_lead)
+
+###END RIGHT CONTACT
+
+
+###LEFT CONTACT
+#call upon reversed() method to connect the left lead
+syst.attach_lead(right_lead.reversed())
+###END LEFT CONTACT
+
+
+
+
+
+
+
+
+"""
+Here we construct the top and bottom arms of our system.
+"""
+###TOP LEFT CONTACT
+#declare the top left lead 'symmetry'?
+sym_left_top_lead = kwant.TranslationalSymmetry((0, a))
+
+#initialize the object for left top lead
+left_top_lead = kwant.Builder(sym_left_top_lead) 
+
+#construct the sites and hop to parent lattice
+for i in range(L):
+    for j in range(W):
+        
+        if((i <= 10 and i >= 5)):
+            left_top_lead[lat(i,20)] = t
+            left_top_lead[lat(i,20),lat(i,19)] = t
+
+
+#hop between contact sites
+left_top_lead[lat.neighbors()] = t
+
+#attach the top left lead to our system
+syst.attach_lead(left_top_lead)
+
+###END TOP LEFT CONTACT
+
+
+###TOP MID CONTACT
+#declare top mid contact and state symmetry
+sym_top_mid_lead = kwant.TranslationalSymmetry((0,a))
+top_mid_lead = kwant.Builder(sym_top_mid_lead)
+
+for i in range(L):
+    for j in range(W):
+        
+        if(i <= 20 and i >= 15):
+            top_mid_lead[lat(i,20)] = t
+            top_mid_lead[lat(i,20),lat(i,19)] = t
+
+
+#hop between contact sites
+top_mid_lead[lat.neighbors()] = t
+
+
+#attach the top left lead to our system
+syst.attach_lead(top_mid_lead)
+###END TOP MID CONTACT
+
+
+
+
+
+###TOP RIGHT CONTACT
+#declare top right contact and state symmetry
+sym_top_right_lead = kwant.TranslationalSymmetry((0,a))
+top_right_lead = kwant.Builder(sym_top_right_lead)
+
+for i in range(L):
+    for j in range(W):
+        
+        if(i <= 30 and i >= 25):
+            top_right_lead[lat(i,20)] = t
+            top_right_lead[lat(i,20),lat(i,19)] = t
+
+
+#hop between contact sites
+top_right_lead[lat.neighbors()] = t
+
+
+#attach the top right lead to our system
+syst.attach_lead(top_right_lead)
+###END TOP RIGHT CONTACT
+
+
+
+
+
+
+
+
+
+"""
+For the bottom leads, we call upon the method reversed() to mirror
+the top leads.
+"""
+
+###BOTTOM LEFT CONTACT
+#call upon reversed() method to connect the bottom left lead
+syst.attach_lead(left_top_lead.reversed())
+###END BOTTOM LEFT CONTACT
+
+###BOTTOM MID CONTACT
+syst.attach_lead(top_mid_lead.reversed())
+###END BOTTOM MID CONTACT
+
+###BOTTOM MID CONTACT
+syst.attach_lead(top_right_lead.reversed())
+###END BOTTOM MID CONTACT
+
+syst.finalized()
+
+#plot system
+kwant.plot(syst);
+
+
+"""
+THINGS TO DO NEXT:
+*Try to measure probabilistic conductance between different leads.
+
+*For this we need smatrix.
+
+*Hopefully we can specify which leads we want to measure accross from 
+the names that we provided them above.
+
+
+
+SOME FINAL COMMENTS:
+I made sure to not cut many corners by creating as many leads as possible. The reasoning behind this is
+that if I were to construct the leads on the top in one iteration, builder() would treat it as one whole
+lead instead of three seperate leads. We need each lead to be unique to builder() because we want to be
+able to measure conductance probabilites between different leads. I believe that I can specify them
+by using their names when passing them to the sampling matrix. If this is not possible, the other method
+of selection is by using their symmetry tuples.
+
+There is one portion of this code that makes me believe that I won't be able to measure conductance vertically
+between, say, top_mid_lead and bottom_mid_lead. That portion would be the specification for the reverse() 
+constructions. There are two viable ways of going around this:
+1) setting the reversed lead to a variable, for example: 'bottom_mid_lead = syst.attach_lead(top_mid_lead.reversed())'
+    *this constructs an object of the same type but stores it under a new name
+    *I believe that you can call upon the attributes and methods still for this new object
+2) if this does not work, then we can manually construct three more leads for these bottom contacts
+
+
+"""
+
+print()
