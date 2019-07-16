@@ -1,0 +1,34 @@
+###LATTICES
+import kwant
+
+###MONATOMIC
+"""
+
+"""
+
+
+
+
+# Two monatomic lattices
+primitive_vectors = [(0,1), (1,0)]
+
+lat_a = kwant.lattice.Monatomic(primitive_vectors, offset=(0, 0))
+lat_b = kwant.lattice.Monatomic(primitive_vectors, offset=(2.5,2.5))
+# lat1 is equivalent to kwant.lattice.square()
+
+syst = kwant.Builder()
+
+
+#notice that here we use (0,0) to place the origin for these sites, they'll appear on the graph offset from here
+syst[lat_a(0,0)] = 4
+syst[lat_b(0,0)] = 4
+
+'''
+for i in range(1,10):
+    lat_a = kwant.lattice.Monatomic(primitive_vectors, offset=(1*i,1*i))
+
+    syst[lat_a(0,0)] = 4
+    #syst[lat_b(1,1)] = 4
+'''
+kwant.plot(syst);
+    
